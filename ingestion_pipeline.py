@@ -2,7 +2,7 @@ import os
 from langchain_community.document_loaders import TextLoader, DirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_chroma import Chroma
+from langchain_community.vectorstores import FAISS
 
 
 def load_documents(docs_path="docs"):
@@ -32,27 +32,27 @@ def split_documents(documents):
     return chunks
 
 
-def create_vector_store(chunks):
+def create_faiss_vector_store(chunks):
     print("Creating embeddings using Sentence Transformers...")
 
     embedding_model = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2"
     )
 
-    vectorstore = Chroma.from_documents(
+    vectorstore = FAISS.from_documents(
         documents=chunks,
-        embedding=embedding_model,
-        persist_directory="db/chroma_db"
+        embedding=embedding_model
     )
 
-    print("Vector store created successfully!")
-    return vectorstore
+    vectorstore.save_local("db/faiss_index")
+
+    print("FAISS vector store created and saved successfully!")
 
 
 def main():
     documents = load_documents()
     chunks = split_documents(documents)
-    create_vector_store(chunks)
+    create_faiss_vector_store(chunks)
 
 
 if __name__ == "__main__":

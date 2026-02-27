@@ -1,22 +1,23 @@
-from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.vectorstores import FAISS
 
 
-def load_vector_store():
+def load_faiss_vector_store():
     embedding_model = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2"
     )
 
-    vectorstore = Chroma(
-        persist_directory="db/chroma_db",
-        embedding_function=embedding_model
+    vectorstore = FAISS.load_local(
+        "db/faiss_index",
+        embedding_model,
+        allow_dangerous_deserialization=True
     )
 
     return vectorstore
 
 
 def main():
-    vectorstore = load_vector_store()
+    vectorstore = load_faiss_vector_store()
     retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
 
     query = input("Enter your question: ")

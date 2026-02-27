@@ -14,10 +14,6 @@ Nadella took over as CEO in 2014, the company has changed focus towards cloud co
 expanded its video gaming business to support the Xbox brand, establishing the Microsoft Gaming division in 2022 and the acquisition of Activision
 Blizzard for $68.7 billion in 2023.[8]
 
-
-
-
-
 Microsoft Corporation
 
 Microsoft has been dominant in the IBM PC- compatible operating system market and the office software suite market since the 1990s. Its best-known software products are the Windows line of operating systems and the Microsoft Office and Microsoft 365 suite of productivity applications, which most notably include the Word word processor, Excel spreadsheet editor, and the PowerPoint presentation program. Its flagship hardware products are the Surface lineup of personal computers and Xbox video game consoles, the latter of which includes the Xbox network; the company also provides a range of consumer Internet services such as Bing web search, the MSN web portal, the Outlook.com (Hotmail) email service and the Microsoft Store. In the enterprise and development fields, Microsoft most notably provides the Azure cloud computing platform, Microsoft SQL Server database software, and Visual Studio.
@@ -110,7 +106,7 @@ Chief Software Architect.[9]:111,228[13]
 
 On October 25, 2001, Microsoft released Windows XP, unifying the mainstream and NT lines of OS under the NT codebase.[39] The company released the Xbox later that year, entering the video game
 console market dominated by Sony and Nintendo.[40] In March 2004
-the European Union brought antitrust legal action against the company, citing it abused its dominance with the Windows OS, resulting in a judgment of €497 million ($613 million) and requiring Microsoft to produce new versions of Windows XP without Windows
+the European Union brought antitrust legal action against the company, citing it abused its dominance with the Windows OS, resulting in a judgment of ï¿½497 million ($613 million) and requiring Microsoft to produce new versions of Windows XP without Windows
 Media Player: Windows XP Home Edition N and Windows XP Professional N.[41][42] In November 2005, the company's second video game console, the Xbox 360, was released. There
 were two versions, a basic version for $299.99 and a deluxe version for $399.99.[43]
 
@@ -143,7 +139,7 @@ that his first priority was to get the people
 he delegates to in order. Ballmer also emphasized the need to continue pursuing new technologies even if initial attempts fail, citing the original attempts with Windows as an example.[44]
 
 user interface which was a significant departure from its predecessors. Relatively strong sales of both products helped to produce a record profit in 2007.[47] The European Union
-imposed another fine of €899 million ($1.4 billion) for Microsoft's lack of compliance with the March 2004 judgment on February 27, 2008, saying that the company charged rivals unreasonable prices for key information about its workgroup
+imposed another fine of ï¿½899 million ($1.4 billion) for Microsoft's lack of compliance with the March 2004 judgment on February 27, 2008, saying that the company charged rivals unreasonable prices for key information about its workgroup
 
 and backoffice servers.[48] Microsoft stated that it was in compliance and that "these fines are about
 the past issues that have been resolved".[49] Gates retired from his role as Chief Software Architect on June 27, 2008, a decision announced in June 2006, while retaining other positions related to the company in addition to being an advisor for the company on key projects.[50][51] Azure Services
@@ -342,9 +338,119 @@ Under U.S. law, corporations do not pay income tax on overseas profits until the
 The key trends of Microsoft are (as at the financial year ending June 30):[188][189]
 
 
-YearRevenue
-in billion US$[190]Net income
-in billion US$[190]  Total Assets in billion US$[190]Employees[191]200539.712.270.861,000200644.212.569.571,000200751.114.063.179,000200860.417.672.791,000200958.414.577.893,000201062.418.786.189,000201169.923.110890,000201273.716.912194,000201377.821.814299,000201486.822.0172128,000201593.512.1174118,000201691.120.5193114,000201796.521.2250124,000201811016.5258131,000201912539.2286144,106202014344.2301163,000202116861.2333181,000202219872.7364221,000202321172.3411238,000202424588.1512228,0002025282101.8619228,000
+Year
+Revenue
+in billion US$[190]
+Net income
+in billion US$[190]
+  Total Assets in billion US$[190]
+Employees[191]
+2005
+39.7
+12.2
+70.8
+61,000
+2006
+44.2
+12.5
+69.5
+71,000
+2007
+51.1
+14.0
+63.1
+79,000
+2008
+60.4
+17.6
+72.7
+91,000
+2009
+58.4
+14.5
+77.8
+93,000
+2010
+62.4
+18.7
+86.1
+89,000
+2011
+69.9
+23.1
+108
+90,000
+2012
+73.7
+16.9
+121
+94,000
+2013
+77.8
+21.8
+142
+99,000
+2014
+86.8
+22.0
+172
+128,000
+2015
+93.5
+12.1
+174
+118,000
+2016
+91.1
+20.5
+193
+114,000
+2017
+96.5
+21.2
+250
+124,000
+2018
+110
+16.5
+258
+131,000
+2019
+125
+39.2
+286
+144,106
+2020
+143
+44.2
+301
+163,000
+2021
+168
+61.2
+333
+181,000
+2022
+198
+72.7
+364
+221,000
+2023
+211
+72.3
+411
+238,000
+2024
+245
+88.1
+512
+228,000
+2025
+282
+101.8
+619
+228,000
+
 In November 2018, the company won a $480 million military contract with the U.S. government to bring augmented reality (AR) headset technology into the weapon repertoires of American soldiers. The two-year contract may result in follow-on orders of more than 100,000 headsets, according to documentation describing the bidding process. One of the contract's tag lines for the augmented reality technology seems to be its ability to enable "25 bloodless battles before the 1st battle", suggesting that actual combat training is going to be an essential aspect of the augmented reality
 headset capabilities.[192]
 
@@ -355,7 +461,33 @@ Microsoft is an international business. As such, it needs subsidiaries present i
 Ownership
 The 10 largest shareholders of Microsoft in early 2024 were:[182][194]
 
-Shareholder namePercentageThe Vanguard Group8.9%BlackRock5.6%State Street Corporation4.0%Steve Ballmer4.0%Fidelity Investments2.9%Geode Capital Management2.1%T. Rowe Price International1.9%Eaton Vance1.7%JP Morgan Investment Management1.6%Bill Gates1.4%BlackRock Life1.4%Others68.5%
+Shareholder name
+Percentage
+The Vanguard Group
+8.9%
+BlackRock
+5.6%
+State Street Corporation
+4.0%
+Steve Ballmer
+4.0%
+Fidelity Investments
+2.9%
+Geode Capital Management
+2.1%
+T. Rowe Price International
+1.9%
+Eaton Vance
+1.7%
+JP Morgan Investment Management
+1.6%
+Bill Gates
+1.4%
+BlackRock Life
+1.4%
+Others
+68.5%
+
 Marketing
 In 2004, Microsoft commissioned research firms to do independent studies comparing the total cost of ownership (TCO) of Windows Server 2003 to Linux; the firms concluded that companies found Windows easier to administrate than Linux, thus those using Windows would administrate faster
 resulting in lower costs for their company (i.e. lower TCO).[195] This spurred a wave of related studies;
@@ -544,7 +676,7 @@ PRISM is a clandestine surveillance program under which the NSA collects user da
 
 employees in a convenient place, but in turn overworks them to a point where it would be bad for their (possibly long-term) health.
 
-As reported by several news outlets,[296][297] an Irish subsidiary of Microsoft based in the Republic of Ireland declared £220 bn in profits but paid no corporation tax for the year 2020. This is due to the company being tax resident in Bermuda as mentioned in the accounts for 'Microsoft Round Island One, a subsidiary that collects license fees from the use of Microsoft software worldwide. Dame Margaret Hodge, a Labour MP in the UK said, "It is unsurprising - yet still shocking - that massively
+As reported by several news outlets,[296][297] an Irish subsidiary of Microsoft based in the Republic of Ireland declared ï¿½220 bn in profits but paid no corporation tax for the year 2020. This is due to the company being tax resident in Bermuda as mentioned in the accounts for 'Microsoft Round Island One, a subsidiary that collects license fees from the use of Microsoft software worldwide. Dame Margaret Hodge, a Labour MP in the UK said, "It is unsurprising - yet still shocking - that massively
 wealthy global corporations openly, unashamedly and blatantly refuse to pay tax on the profits they make in the countries where they undertake business".[297]
 In 2020, ProPublica reported that the company had diverted more than $39 billion in U.S. profits to Puerto Rico using a mechanism structured to make it seem as if the company was unprofitable on paper. As a result, the company paid a tax rate on those profits of "nearly 0%". When the Internal Revenue Service audited these transactions, ProPublica reported that Microsoft aggressively fought back, including successfully lobbying Congress to change the law to make it harder for the agency to conduct audits of large corporations.[298][299] In 2023, Microsoft reported in a securities filing that the U.S. Internal Revenue Service was alleging that the company owed the U.S. $28.9 billion in past taxes, plus penalties related to mis-allocation of corporate profits over a decade.[300]
 "Embrace, extend, and extinguish" (EEE),[301] also known as "embrace, extend, and exterminate,"[302] is a phrase that the U.S. Department of Justice found[303] that was used internally by Microsoft[304] to describe its strategy for entering product categories involving widely used standards, extending those standards with proprietary capabilities, and then using those differences to strongly disadvantage competitors. Microsoft is frequently accused of using anticompetitive tactics and abusing its monopolistic power. People who use its products and services often end up becoming dependent on them, a process known as vendor lock-in.
@@ -558,7 +690,7 @@ Microsoft facing an antitrust investigation from the European Union.[310]
 
 In June 2024, Microsoft faced a potential EU fine after regulators accused it of abusing market power by bundling its Teams video-conferencing app with its Office 365 and Microsoft 365 software. The European Commission issued a statement of objections, alleging Microsoft's practice since 2019 gave Teams an unfair market advantage and limited interoperability with competing software. Despite Microsoft's efforts to avoid deeper scrutiny, including unbundling Teams, regulators remained unconvinced. This action followed a 2019 complaint from Slack, which was later acquired by
 
-Salesforce. Microsoft's Teams usage soared during the pandemic, growing from 2 million daily users in 2017 to 300 million in 2023. The company has a history of antitrust battles in the U.S. and Europe, with over €2 billion in EU fines previously imposed for similar abuses.[311]
+Salesforce. Microsoft's Teams usage soared during the pandemic, growing from 2 million daily users in 2017 to 300 million in 2023. The company has a history of antitrust battles in the U.S. and Europe, with over ï¿½2 billion in EU fines previously imposed for similar abuses.[311]
 
 Involvement in the Israeli-Palestinian Conflict
 In October 2024, Microsoft fired two employees, software engineers Ibtihal Aboussad and Vaniya Agrawal,[312] who organized an unauthorized vigil at its Redmond headquarters to honor Palestinians killed in the Gaza war. The employees, part of the group No Azure for Apartheid, sought to address the
@@ -870,7 +1002,7 @@ Retrieved July 7, 2025.
 211. "Bethesda Game Studios Workers Win Labour Board Certification, Officially Join CWA Canada" (h ttps://cwacanada.ca/2024/08/16/bethesda-game-studios-workers-win-labour-board-certification-off icially-join-cwa-canada/). CWA Canada. August 16, 2024. Archived (https://web.archive.org/web/2 0240816130635/https://cwacanada.ca/2024/08/16/bethesda-game-studios-workers-win-labour-bo ard-certification-officially-join-cwa-canada/) from the original on August 16, 2024. Retrieved August 19, 2024.
 212. "Microsoft Korea Workers' Union votes to strike over wages and disregard for workers' sacrifice during pandemic" (https://uniglobalunion.org/news/microsoft-korea-workers-union-votes-to-strike-o ver-wages-and-disregard-for-workers-sacrifice-during-pandemic/). UNI Global Union. Retrieved June 26, 2022.
 213. Kim, Jiseon (October 17, 2017). "South Korea Oracle Establishes Its First Labor Union" (https://en glish.etnews.com/20171017200001?SNS=00002). ETNEWS. Retrieved June 26, 2022.
-214. Richter, Isabel (September 1, 2014). "Microsoft Deutschland führt "Vertrauensarbeitsort" ein" (http s://news.microsoft.com/de-de/microsoft-deutschland-fhrt-vertrauensarbeitsort-ein/) [Microsoft Germany introduces "trusted workplace]. Microsoft Germany (in German). Retrieved
+214. Richter, Isabel (September 1, 2014). "Microsoft Deutschland fï¿½hrt "Vertrauensarbeitsort" ein" (http s://news.microsoft.com/de-de/microsoft-deutschland-fhrt-vertrauensarbeitsort-ein/) [Microsoft Germany introduces "trusted workplace]. Microsoft Germany (in German). Retrieved
 September 22, 2023.
 215. "U.S. Agencies Said to Swap Data With Thousands of Firms" (https://www.bloomberg.com/news/2 013-06-14/u-s-agencies-said-to-swap-data-with-thousands-of-firms.html). Bloomberg. June 15, 2013. Archived (https://web.archive.org/web/20150112075940/http://www.bloomberg.com/news/20 13-06-14/u-s-agencies-said-to-swap-data-with-thousands-of-firms.html) from the original on January 12, 2015. Retrieved March 10, 2017.
 216. Neal, Ryan W. (July 11, 2013). "Snowden Reveals Microsoft PRISM Cooperation: Helped NSA Decrypt Emails, Chats, Skype Conversations" (http://www.ibtimes.com/snowden-reveals-microsoft
@@ -979,8 +1111,8 @@ July 12, 2022.
 293. Greene, J; Hamm, S; Brady, D; Der Hovanesian, M (September 26, 2005). "Troubling Exits At Microsoft" (https://web.archive.org/web/20070502084953/http://www.businessweek.com/magazin e/content/05_39/b3952001.htm). BusinessWeek. Archived from the original (http://www.businessw eek.com/magazine/content/05_39/b3952001.htm) on May 2, 2007.
 294. Andrews, Paul (April 23, 1989). "A 'Velvet Sweatshop' or a High-Tech Heaven?" (https://archive.to day/20120629191556/http://www.krsaborio.net/research/1980s/89/890423.htm). The Seattle Times. Archived from the original (http://www.krsaborio.net/research/1980s/89/890423.htm) on June 29, 2012.
 295. "Editor's note, MSJ August 1997" (https://web.archive.org/web/20070214061859/http://www.micro soft.com/msj/0897/ednote0897.aspx). Microsoft. Archived from the original (https://www.microsoft. com/msj/0897/ednote0897.aspx) on February 14, 2007. Retrieved September 27, 2005.
-296. Hancock, Ciarán. "Irish-registered subsidiary of Microsoft records $314bn profit" (https://www.irisht imes.com/business/technology/irish-registered-subsidiary-of-microsoft-records-314bn-profit-1.456 5525). The Irish Times. Retrieved June 3, 2021.
-297. Neate, Rupert (June 3, 2021). "Microsoft's Irish subsidiary paid zero corporation tax on £220bn profit" (https://www.theguardian.com/world/2021/jun/03/microsoft-irish-subsidiary-paid-zero-corpor ate-tax-on-220bn-profit-last-year). The Guardian. Retrieved June 3, 2021.
+296. Hancock, Ciarï¿½n. "Irish-registered subsidiary of Microsoft records $314bn profit" (https://www.irisht imes.com/business/technology/irish-registered-subsidiary-of-microsoft-records-314bn-profit-1.456 5525). The Irish Times. Retrieved June 3, 2021.
+297. Neate, Rupert (June 3, 2021). "Microsoft's Irish subsidiary paid zero corporation tax on ï¿½220bn profit" (https://www.theguardian.com/world/2021/jun/03/microsoft-irish-subsidiary-paid-zero-corpor ate-tax-on-220bn-profit-last-year). The Guardian. Retrieved June 3, 2021.
 298. Doctorow, Cory (January 22, 2020). "The sordid tale of Microsoft's epic tax evasion and the war they waged against the IRS" (https://boingboing.net/2020/01/22/clippy-dodges-taxes.html). Boing Boing. Retrieved February 15, 2022.
 299. Kiel, Paul (January 22, 2020). "The IRS Decided to Get Tough Against Microsoft. Microsoft Got Tougher" (https://www.propublica.org/article/the-irs-decided-to-get-tough-against-microsoft-micros oft-got-tougher). ProPublica. Retrieved February 15, 2022.
 300. "The IRS says Microsoft may owe about $29 billion in back taxes. Microsoft disagrees" (https://ap news.com/article/microsoft-taxes-irs-96eb66abe86de19f1108209a8d57431a). AP News. October 12, 2023. Retrieved April 8, 2024.
@@ -1036,7 +1168,7 @@ External links
 Official website (https://www.microsoft.com/)
 
 Microsoft (https://www.opensecrets.org/orgs/summary?id=d000000115) on OpenSecrets, a website that tracks and publishes data on campaign finance and lobbying
-Business data for Microsoft Corporation: Google (https://www.google.com/finance/quote/MSFT:NA SDAQ) · Reuters (https://www.reuters.com/markets/companies/MSFT.O) · SEC filings (https://ww w.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=789019) · Yahoo! (https://finance.yaho o.com/quote/MSFT)
+Business data for Microsoft Corporation: Google (https://www.google.com/finance/quote/MSFT:NA SDAQ) ï¿½ Reuters (https://www.reuters.com/markets/companies/MSFT.O) ï¿½ SEC filings (https://ww w.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=789019) ï¿½ Yahoo! (https://finance.yaho o.com/quote/MSFT)
 
 Retrieved from "https://en.wikipedia.org/w/index.php?title=Microsoft&oldid=1333260964"
 
