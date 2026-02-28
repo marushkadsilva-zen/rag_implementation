@@ -1,5 +1,13 @@
 import os
-from langchain_community.document_loaders import TextLoader, DirectoryLoader
+from langchain_community.document_loaders import (
+    DirectoryLoader,
+    TextLoader,
+    PyPDFLoader,
+    Docx2txtLoader,
+    CSVLoader,
+    UnstructuredMarkdownLoader,
+    UnstructuredHTMLLoader
+)
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
@@ -8,14 +16,23 @@ from langchain_community.vectorstores import FAISS
 def load_documents(docs_path="docs"):
     print(f"Loading documents from {docs_path}...")
 
-    loader = DirectoryLoader(
-        path=docs_path,
-        glob="*.txt",
-        loader_cls=TextLoader
-    )
+    loaders = [
+        DirectoryLoader(docs_path, glob="**/*.txt", loader_cls=TextLoader),
+        DirectoryLoader(docs_path, glob="**/*.pdf", loader_cls=PyPDFLoader),
+        DirectoryLoader(docs_path, glob="**/*.docx", loader_cls=Docx2txtLoader),
+        DirectoryLoader(docs_path, glob="**/*.csv", loader_cls=CSVLoader),
+        DirectoryLoader(docs_path, glob="**/*.md", loader_cls=UnstructuredMarkdownLoader),
+        DirectoryLoader(docs_path, glob="**/*.html", loader_cls=UnstructuredHTMLLoader),
+    ]
 
-    documents = loader.load()
-    print(f"Loaded {len(documents)} documents")
+    documents = []
+    for loader in loaders:
+        try:
+            documents.extend(loader.load())
+        except Exception as e:
+            print(f"Error loading files: {e}")
+
+    print(f"Total documents loaded: {len(documents)}")
     return documents
 
 
@@ -46,7 +63,7 @@ def create_faiss_vector_store(chunks):
 
     vectorstore.save_local("db/faiss_index")
 
-    print("FAISS vector store created and saved successfully!")
+    print("FAISS vector store created successfully!")
 
 
 def main():
