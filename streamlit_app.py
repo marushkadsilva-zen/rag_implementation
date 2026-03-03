@@ -1,13 +1,29 @@
 # streamlit_app.py
 
+# streamlit_app.py
+
 import os
 import streamlit as st
-from retrieval_pipeline import ask_question
 
 st.set_page_config(page_title="RAG System", layout="wide")
-
 st.title("📚 RAG Question Answering System")
 
+
+# ---------------------------
+# Cache QA System
+# ---------------------------
+@st.cache_resource
+def load_qa_system():
+    from retrieval_pipeline import ask_question
+    return ask_question
+
+
+ask_question = load_qa_system()
+
+
+# ---------------------------
+# UI
+# ---------------------------
 query = st.text_input("Ask a question")
 
 if st.button("Submit") and query:
@@ -20,4 +36,7 @@ if st.button("Submit") and query:
     if docs:
         st.subheader("Sources")
         for doc in docs:
-            st.write(os.path.basename(doc.metadata.get("source", "")))
+            source = os.path.basename(doc.metadata.get("source", "Unknown"))
+            st.write(f"- {source}")
+
+

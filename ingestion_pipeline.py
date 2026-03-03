@@ -1,5 +1,3 @@
-# create_index.py
-
 import os
 from langchain_community.document_loaders import (
     DirectoryLoader,
@@ -47,8 +45,8 @@ def split_documents(documents):
     print("Splitting documents...")
 
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=600,
-        chunk_overlap=150,
+        chunk_size=800,
+        chunk_overlap=100,
         separators=["\n\n", "\n", ".", " ", ""]
     )
 
