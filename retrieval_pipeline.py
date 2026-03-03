@@ -1,69 +1,67 @@
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings, HuggingFacePipeline
 from langchain_community.vectorstores import FAISS
+from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from transformers import pipeline
 
 
-def load_faiss_vector_store():
-    embedding_model = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
-    )
-
-    vectorstore = FAISS.load_local(
-        "db/faiss_index",
-        embedding_model,
-        allow_dangerous_deserialization=True
-    )
-
-    return vectorstore
+from langchain_huggingface import HuggingFaceEmbeddings, HuggingFacePipeline
+from langchain_community.vectorstores import FAISS
+from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from transformers import pipeline
 
 
-def main():
-    print("Loading FAISS vector store...")
-    vectorstore = load_faiss_vector_store()
+# 🔥 LOAD ONCE ONLY
+embeddings = HuggingFaceEmbeddings(
+    model_name="sentence-transformers/all-MiniLM-L6-v2"
+)
 
-    query = input("\nEnter your question: ")
+vectorstore = FAISS.load_local(
+    "db/faiss_index",
+    embeddings,
+    allow_dangerous_deserialization=True
+)
 
-    print("\nRetrieving results...\n")
+pipe = pipeline(
+    "text2text-generation",
+    model="google/flan-t5-base",
+    max_new_tokens=256
+)
 
-    # ✅ Use MMR (diverse retrieval)
+llm = HuggingFacePipeline(pipeline=pipe)
+
+def ask_question(question: str):
+
     retriever = vectorstore.as_retriever(
         search_type="mmr",
-        search_kwargs={
-            "k": 3,
-            "fetch_k": 10
-        }
+        search_kwargs={"k": 3, "fetch_k": 10}
     )
 
-    docs = retriever.invoke(query)
+    docs = retriever.invoke(question)
+    context = "\n\n".join([doc.page_content for doc in docs])
 
-    # ✅ Get similarity scores separately
-    scored_docs = vectorstore.similarity_search_with_score(query, k=3)
+    prompt = PromptTemplate(
+        template="""
+Use ONLY the context below to answer.
+If answer is not in context, say you don't know.
 
-    for i, doc in enumerate(docs):
-        print("=" * 70)
-        print(f"Result {i+1}")
-        print("-" * 70)
+Context:
+{context}
 
-        # Find matching score
-        score = None
-        for d, s in scored_docs:
-            if d.page_content == doc.page_content:
-                score = s
-                break
+Question:
+{question}
 
-        if score is not None:
-            print(f"Similarity Score: {score:.4f}")
-        else:
-            print("Similarity Score: Not available")
+Answer:
+""",
+        input_variables=["context", "question"]
+    )
 
-        # Show source file
-        source = doc.metadata.get("source", "Unknown")
-        print(f"Source File: {source}")
+    chain = prompt | llm | StrOutputParser()
 
-        print("\nContent Preview:\n")
-        print(doc.page_content[:500])
+    answer = chain.invoke({
+        "context": context,
+        "question": question
+    })
 
-        print("=" * 70)
-
-
-if __name__ == "__main__":
-    main()
+    return answer, docs

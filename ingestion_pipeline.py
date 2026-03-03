@@ -1,4 +1,5 @@
 import os
+import faiss
 from langchain_community.document_loaders import (
     DirectoryLoader,
     TextLoader,
@@ -17,7 +18,12 @@ def load_documents(docs_path="docs"):
     print(f"Loading documents from {docs_path}...")
 
     loaders = [
-        DirectoryLoader(docs_path, glob="**/*.txt", loader_cls=TextLoader),
+        DirectoryLoader(
+            docs_path,
+            glob="**/*.txt",
+            loader_cls=TextLoader,
+            loader_kwargs={"encoding": "utf-8"}  # small safety improvement
+        ),
         DirectoryLoader(docs_path, glob="**/*.pdf", loader_cls=PyPDFLoader),
         DirectoryLoader(docs_path, glob="**/*.docx", loader_cls=Docx2txtLoader),
         DirectoryLoader(docs_path, glob="**/*.csv", loader_cls=CSVLoader),
@@ -40,8 +46,9 @@ def split_documents(documents):
     print("Splitting documents...")
 
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=800,
-        chunk_overlap=100
+        chunk_size=600,
+        chunk_overlap=150,
+        separators=["\n\n", "\n", ".", " ", ""]
     )
 
     chunks = text_splitter.split_documents(documents)
@@ -52,25 +59,21 @@ def split_documents(documents):
 def create_faiss_vector_store(chunks):
     print("Creating embeddings using Sentence Transformers...")
 
-    embedding_model = HuggingFaceEmbeddings(
+    embeddings = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2"
     )
 
+    # ✅ FIX: Remove custom index
     vectorstore = FAISS.from_documents(
         documents=chunks,
-        embedding=embedding_model
+        embedding=embeddings
     )
 
     vectorstore.save_local("db/faiss_index")
-
-    print("FAISS vector store created successfully!")
-
-
-def main():
-    documents = load_documents()
-    chunks = split_documents(documents)
-    create_faiss_vector_store(chunks)
+    print("✅ FAISS index created successfully!")
 
 
 if __name__ == "__main__":
-    main()
+    docs = load_documents()
+    chunks = split_documents(docs)
+    create_faiss_vector_store(chunks)
