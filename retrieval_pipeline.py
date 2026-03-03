@@ -1,50 +1,54 @@
+# retrieval_pipeline.py
+
+import os
+from transformers import pipeline
 from langchain_huggingface import HuggingFaceEmbeddings, HuggingFacePipeline
 from langchain_community.vectorstores import FAISS
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-from transformers import pipeline
 
-
-from langchain_huggingface import HuggingFaceEmbeddings, HuggingFacePipeline
-from langchain_community.vectorstores import FAISS
-from langchain_core.prompts import PromptTemplate
-from langchain_core.output_parsers import StrOutputParser
-from transformers import pipeline
-
-
-# 🔥 LOAD ONCE ONLY
+# 🔥 Load embeddings once
 embeddings = HuggingFaceEmbeddings(
     model_name="sentence-transformers/all-MiniLM-L6-v2"
 )
 
+# 🔥 Load vector store once
 vectorstore = FAISS.load_local(
     "db/faiss_index",
     embeddings,
     allow_dangerous_deserialization=True
 )
 
+# 🔥 Global retriever (NO recreation per request)
+retriever = vectorstore.as_retriever(
+    search_type="mmr",
+    search_kwargs={
+        "k": 4,
+        "fetch_k": 20,
+        "lambda_mult": 0.7
+    }
+)
+
+# 🔥 Better LLM pipeline
 pipe = pipeline(
     "text2text-generation",
     model="google/flan-t5-base",
-    max_new_tokens=256
+    max_new_tokens=256,
+    temperature=0
 )
 
 llm = HuggingFacePipeline(pipeline=pipe)
 
-def ask_question(question: str):
+# 🔥 Stronger anti-hallucination prompt
+prompt = PromptTemplate(
+    template="""
+You are a helpful assistant.
 
-    retriever = vectorstore.as_retriever(
-        search_type="mmr",
-        search_kwargs={"k": 3, "fetch_k": 10}
-    )
+Answer the question ONLY using the provided context.
+If the answer is not explicitly written in the context, say:
+"I don't know based on the provided documents."
 
-    docs = retriever.invoke(question)
-    context = "\n\n".join([doc.page_content for doc in docs])
-
-    prompt = PromptTemplate(
-        template="""
-Use ONLY the context below to answer.
-If answer is not in context, say you don't know.
+Keep the answer concise and factual.
 
 Context:
 {context}
@@ -54,14 +58,23 @@ Question:
 
 Answer:
 """,
-        input_variables=["context", "question"]
-    )
+    input_variables=["context", "question"]
+)
 
-    chain = prompt | llm | StrOutputParser()
+chain = prompt | llm | StrOutputParser()
+
+
+def ask_question(question: str):
+    docs = retriever.invoke(question)
+
+    if not docs:
+        return "I don't know based on the provided documents.", []
+
+    context = "\n\n".join([doc.page_content for doc in docs])
 
     answer = chain.invoke({
         "context": context,
         "question": question
     })
 
-    return answer, docs
+    return answer.strip(), docs

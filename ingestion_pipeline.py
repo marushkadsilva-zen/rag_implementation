@@ -1,5 +1,6 @@
+# create_index.py
+
 import os
-import faiss
 from langchain_community.document_loaders import (
     DirectoryLoader,
     TextLoader,
@@ -22,7 +23,7 @@ def load_documents(docs_path="docs"):
             docs_path,
             glob="**/*.txt",
             loader_cls=TextLoader,
-            loader_kwargs={"encoding": "utf-8"}  # small safety improvement
+            loader_kwargs={"encoding": "utf-8"}
         ),
         DirectoryLoader(docs_path, glob="**/*.pdf", loader_cls=PyPDFLoader),
         DirectoryLoader(docs_path, glob="**/*.docx", loader_cls=Docx2txtLoader),
@@ -57,19 +58,20 @@ def split_documents(documents):
 
 
 def create_faiss_vector_store(chunks):
-    print("Creating embeddings using Sentence Transformers...")
+    print("Creating embeddings...")
 
     embeddings = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2"
     )
 
-    # ✅ FIX: Remove custom index
     vectorstore = FAISS.from_documents(
         documents=chunks,
         embedding=embeddings
     )
 
+    os.makedirs("db", exist_ok=True)
     vectorstore.save_local("db/faiss_index")
+
     print("✅ FAISS index created successfully!")
 
 

@@ -1,17 +1,25 @@
-import streamlit as st
+# app.py
+
+import os
+from fastapi import FastAPI
+from pydantic import BaseModel
 from retrieval_pipeline import ask_question
 
-st.title("RAG System")
+app = FastAPI()
 
-query = st.text_input("Ask a question")
 
-if st.button("Submit") and query:
-    with st.spinner("Thinking..."):
-        answer, docs = ask_question(query)
+class Query(BaseModel):
+    question: str
 
-    st.subheader("Answer")
-    st.write(answer)
 
-    st.subheader("Sources")
-    for doc in docs:
-        st.write(doc.metadata.get("source"))
+@app.post("/ask")
+def ask(query: Query):
+    answer, docs = ask_question(query.question)
+
+    return {
+        "answer": answer,
+        "sources": [
+            os.path.basename(doc.metadata.get("source", ""))
+            for doc in docs
+        ]
+    }
