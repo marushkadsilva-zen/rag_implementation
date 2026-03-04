@@ -29,14 +29,24 @@ def load_single_document(file):
 
     if suffix == "pdf":
         loader = PyPDFLoader(tmp_path)
+
     elif suffix == "txt":
-        loader = TextLoader(tmp_path, encoding="utf-8")
+        loader = TextLoader(tmp_path, autodetect_encoding=True)
+
     elif suffix == "docx":
         loader = Docx2txtLoader(tmp_path)
+
     else:
         raise ValueError("Unsupported file type")
 
     documents = loader.load()
+
+    # Debug: print extracted document text
+    for doc in documents:
+        print("\n===== DOCUMENT CONTENT PREVIEW =====")
+        print(doc.page_content[:500])
+        print("====================================\n")
+
     return documents
 
 
@@ -51,6 +61,8 @@ def split_document(documents):
     )
 
     chunks = text_splitter.split_documents(documents)
+
+    print(f"Total chunks created: {len(chunks)}")
 
     return chunks
 
@@ -112,9 +124,15 @@ Answer:
 # ---------------------------
 def ask_single_doc(vectorstore, question):
 
-    retriever = vectorstore.as_retriever(search_kwargs={"k":3})
+    retriever = vectorstore.as_retriever(search_kwargs={"k":5})
 
     docs = retriever.invoke(question)
+
+    # Debug retrieved chunks
+    print("\n===== RETRIEVED CHUNKS =====")
+    for doc in docs:
+        print(doc.page_content[:300])
+        print("-----------------------------")
 
     context = "\n\n".join(doc.page_content for doc in docs)
 

@@ -1,10 +1,47 @@
 # streamlit_app.py
 
 import os
-import streamlit as st
 import json
+import streamlit as st
+
 st.set_page_config(page_title="RAG System", layout="wide")
 st.title("📚 RAG Question Answering System")
+
+
+# ---------------------------
+# Chat Session Manager
+# ---------------------------
+if "chat_sessions" not in st.session_state:
+    st.session_state.chat_sessions = {}
+
+if "current_chat" not in st.session_state:
+    st.session_state.current_chat = None
+
+# store vectorstores per chat
+if "vectorstores" not in st.session_state:
+    st.session_state.vectorstores = {}
+
+# track uploaded files per chat
+if "uploaded_files" not in st.session_state:
+    st.session_state.uploaded_files = {}
+
+
+# ---------------------------
+# Sidebar Chat History
+# ---------------------------
+st.sidebar.title("💬 Chat History")
+
+if st.sidebar.button("➕ New Chat"):
+    chat_id = f"Chat {len(st.session_state.chat_sessions) + 1}"
+    st.session_state.chat_sessions[chat_id] = []
+    st.session_state.current_chat = chat_id
+
+for chat_id in st.session_state.chat_sessions.keys():
+    if st.sidebar.button(chat_id):
+        st.session_state.current_chat = chat_id
+
+if st.session_state.current_chat:
+    st.sidebar.markdown(f"**Current Chat:** {st.session_state.current_chat}")
 
 
 # ---------------------------
@@ -52,15 +89,9 @@ st.divider()
 st.header("📄 Chat With Single Document")
 
 
-# Chat history storage
-if "doc_chat_history" not in st.session_state:
-    st.session_state.doc_chat_history = []
-
-# store vector db
-if "single_vectorstore" not in st.session_state:
-    st.session_state.single_vectorstore = None
-
-
+# ---------------------------
+# Upload Document
+# ---------------------------
 uploaded_file = st.file_uploader(
     "Upload a document",
     type=["pdf", "txt", "docx"]
@@ -68,29 +99,43 @@ uploaded_file = st.file_uploader(
 
 
 # ---------------------------
+# Ensure Chat Exists
+# ---------------------------
+if st.session_state.current_chat is None:
+    chat_id = f"Chat {len(st.session_state.chat_sessions) + 1}"
+    st.session_state.chat_sessions[chat_id] = []
+    st.session_state.current_chat = chat_id
+
+chat_id = st.session_state.current_chat
+chat_history = st.session_state.chat_sessions[chat_id]
+
+
+# ---------------------------
 # Process Uploaded File
 # ---------------------------
 if uploaded_file:
 
-    if st.session_state.single_vectorstore is None:
+    filename = uploaded_file.name
+
+    # rebuild vectorstore if new document uploaded
+    if st.session_state.uploaded_files.get(chat_id) != filename:
 
         with st.spinner("Processing document..."):
 
             docs = load_single_document(uploaded_file)
             chunks = split_document(docs)
 
-            st.session_state.single_vectorstore = create_vectorstore(chunks)
+            st.session_state.vectorstores[chat_id] = create_vectorstore(chunks)
+
+        st.session_state.uploaded_files[chat_id] = filename
 
         st.success("Document processed!")
 
-        # reset chat history for new document
-        st.session_state.doc_chat_history = []
-
 
     # ---------------------------
-    # Show Chat History
+    # Display Chat History
     # ---------------------------
-    for message in st.session_state.doc_chat_history:
+    for message in chat_history:
         with st.chat_message(message["role"]):
             st.write(message["content"])
 
@@ -102,41 +147,52 @@ if uploaded_file:
 
     if user_question:
 
-        # Show user message
         with st.chat_message("user"):
             st.write(user_question)
 
-        st.session_state.doc_chat_history.append({
+        chat_history.append({
             "role": "user",
             "content": user_question
         })
 
-        # Get answer
         with st.spinner("Thinking..."):
 
+            vectorstore = st.session_state.vectorstores[chat_id]
+
             answer = ask_single_doc(
-                st.session_state.single_vectorstore,
+                vectorstore,
                 user_question
             )
 
-        # Show assistant message
         with st.chat_message("assistant"):
             st.write(answer)
 
-        st.session_state.doc_chat_history.append({
+        chat_history.append({
             "role": "assistant",
             "content": answer
         })
 
 
-    # ---------------------------
-    # Clear Chat Button
-    # ---------------------------
+# ---------------------------
+# Buttons Section
+# ---------------------------
+col1, col2 = st.columns(2)
+
+# Clear Chat
+with col1:
     if st.button("Clear Chat"):
-        st.session_state.doc_chat_history = []
+        st.session_state.chat_sessions[chat_id] = []
+        st.rerun()
 
+# Save Conversation
+with col2:
     if st.button("Save Conversation"):
-        with open("chat_history.json", "w") as f:
-            json.dump(st.session_state.doc_chat_history, f, indent=4)
 
-    st.success("Conversation saved successfully!")
+        os.makedirs("logs", exist_ok=True)
+
+        file_path = f"logs/{chat_id}.json"
+
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(chat_history, f, indent=4)
+
+        st.success(f"Conversation saved to {file_path}")
