@@ -1,7 +1,5 @@
 # streamlit_app.py
 
-# streamlit_app.py
-
 import os
 import streamlit as st
 
@@ -38,5 +36,4 @@ if st.button("Submit") and query:
         for doc in docs:
             source = os.path.basename(doc.metadata.get("source", "Unknown"))
             st.write(f"- {source}")
-
 

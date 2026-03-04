@@ -77,3 +77,4 @@ if __name__ == "__main__":
     docs = load_documents()
     chunks = split_documents(docs)
     create_faiss_vector_store(chunks)
+
