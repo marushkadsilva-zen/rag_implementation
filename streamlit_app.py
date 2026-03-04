@@ -134,3 +134,9 @@ if uploaded_file:
     # ---------------------------
     if st.button("Clear Chat"):
         st.session_state.doc_chat_history = []
+
+    if st.button("Save Conversation"):
+        with open("chat_history.json", "w") as f:
+            json.dump(st.session_state.doc_chat_history, f, indent=4)
+
+    st.success("Conversation saved successfully!")
