@@ -15,8 +15,14 @@ import os
 import json
 import streamlit as st
 
-st.set_page_config(page_title="RAG System", layout="wide")
-st.title("📚 RAG Question Answering System")
+st.set_page_config(
+    page_title="RAG AI Assistant",
+    page_icon="🤖",
+    layout="wide"
+)
+
+st.title("🤖 RAG AI Assistant")
+st.caption("Document Question Answering using RAG + Gemini + FAISS")
 
 
 # ---------------------------
@@ -36,9 +42,9 @@ if "uploaded_files" not in st.session_state:
 
 
 # ---------------------------
-# Sidebar Chat History
+# Sidebar
 # ---------------------------
-st.sidebar.title("💬 Chat History")
+st.sidebar.title("💬 Chat Sessions")
 
 if st.sidebar.button("➕ New Chat"):
     chat_id = f"Chat {len(st.session_state.chat_sessions) + 1}"
@@ -50,7 +56,15 @@ for chat_id in st.session_state.chat_sessions.keys():
         st.session_state.current_chat = chat_id
 
 if st.session_state.current_chat:
-    st.sidebar.markdown(f"**Current Chat:** {st.session_state.current_chat}")
+    st.sidebar.success(f"Current Chat: {st.session_state.current_chat}")
+
+st.sidebar.divider()
+st.sidebar.subheader("⚙ Controls")
+
+if st.sidebar.button("Clear Document Chat"):
+    if st.session_state.current_chat:
+        clear_chat(st.session_state.current_chat)
+        st.rerun()
 
 
 # ---------------------------
@@ -66,166 +80,182 @@ ask_question = load_qa_system()
 
 
 # ---------------------------
-# Multi-Document RAG Section
+# Tabs
 # ---------------------------
-st.header("📚 Multi Document Question Answering")
-
-multi_chat_id = "multi_doc_chat"
-
-# display history
-history = get_multi_doc_history(multi_chat_id)
-
-for role, message in history:
-    with st.chat_message(role):
-        st.write(message)
-
-query = st.chat_input("Ask a question about the knowledge base")
-
-if query:
-
-    with st.chat_message("user"):
-        st.write(query)
-
-    save_multi_doc_message(multi_chat_id, "user", query)
-
-    with st.spinner("Thinking..."):
-
-        answer, docs = ask_question(query)
-
-    with st.chat_message("assistant"):
-        st.write(answer)
-
-    sources = ", ".join(
-        os.path.basename(doc.metadata.get("source", "Unknown"))
-        for doc in docs
-    )
-
-    save_multi_doc_message(
-        multi_chat_id,
-        "assistant",
-        answer,
-        sources
-    )
+tab1, tab2 = st.tabs([
+    "📚 Multi Document QA",
+    "📄 Single Document Chat"
+])
 
 
-# clear multi doc history
-if st.button("Clear Multi Document Chat"):
-    clear_multi_doc_chat(multi_chat_id)
-    st.rerun()
+# =====================================================
+# MULTI DOCUMENT RAG
+# =====================================================
+with tab1:
 
+    st.subheader("Knowledge Base Chat")
 
-# ---------------------------
-# Single Document Chat
-# ---------------------------
-from single_doc_chat import (
-    load_single_document,
-    split_document,
-    create_vectorstore,
-    ask_single_doc
-)
+    multi_chat_id = "multi_doc_chat"
 
-st.divider()
-st.header("📄 Chat With Single Document")
-
-
-# ---------------------------
-# Upload Document
-# ---------------------------
-uploaded_file = st.file_uploader(
-    "Upload a document",
-    type=["pdf", "txt", "docx"]
-)
-
-
-# ---------------------------
-# Ensure Chat Exists
-# ---------------------------
-if st.session_state.current_chat is None:
-    chat_id = f"Chat {len(st.session_state.chat_sessions) + 1}"
-    st.session_state.chat_sessions[chat_id] = []
-    st.session_state.current_chat = chat_id
-
-chat_id = st.session_state.current_chat
-
-
-# ---------------------------
-# Process Uploaded File
-# ---------------------------
-if uploaded_file:
-
-    filename = uploaded_file.name
-
-    if st.session_state.uploaded_files.get(chat_id) != filename:
-
-        with st.spinner("Processing document..."):
-
-            docs = load_single_document(uploaded_file)
-            chunks = split_document(docs)
-
-            st.session_state.vectorstores[chat_id] = create_vectorstore(chunks)
-
-        st.session_state.uploaded_files[chat_id] = filename
-
-        st.success("Document processed!")
-
-
-    # ---------------------------
-    # Display Chat History
-    # ---------------------------
-    history = get_chat_history(chat_id)
+    history = get_multi_doc_history(multi_chat_id)
 
     for role, message in history:
         with st.chat_message(role):
             st.write(message)
 
+    query = st.chat_input("Ask a question about your documents")
 
-    # ---------------------------
-    # Chat Input
-    # ---------------------------
-    user_question = st.chat_input("Ask about this document")
-
-    if user_question:
+    if query:
 
         with st.chat_message("user"):
-            st.write(user_question)
+            st.write(query)
 
-        save_message(chat_id, "user", user_question)
+        save_multi_doc_message(multi_chat_id, "user", query)
 
-        with st.spinner("Thinking..."):
-
-            vectorstore = st.session_state.vectorstores[chat_id]
-
-            answer = ask_single_doc(
-                vectorstore,
-                user_question
-            )
+        with st.spinner("🔎 Searching knowledge base..."):
+            answer, docs = ask_question(query)
 
         with st.chat_message("assistant"):
             st.write(answer)
 
-        save_message(chat_id, "assistant", answer)
+            if docs:
+                with st.expander("Sources"):
+                    for doc in docs:
+                        st.write(
+                            os.path.basename(
+                                doc.metadata.get("source", "Unknown")
+                            )
+                        )
 
+        sources = ", ".join(
+            os.path.basename(doc.metadata.get("source", "Unknown"))
+            for doc in docs
+        )
 
-# ---------------------------
-# Buttons Section
-# ---------------------------
-col1, col2 = st.columns(2)
+        save_multi_doc_message(
+            multi_chat_id,
+            "assistant",
+            answer,
+            sources
+        )
 
-with col1:
-    if st.button("Clear Document Chat"):
-        clear_chat(chat_id)
+    if st.button("Clear Multi Document Chat"):
+        clear_multi_doc_chat(multi_chat_id)
         st.rerun()
 
-with col2:
-    if st.button("Save Conversation"):
 
-        os.makedirs("logs", exist_ok=True)
+# =====================================================
+# SINGLE DOCUMENT CHAT
+# =====================================================
+with tab2:
+
+    from single_doc_chat import (
+        load_single_document,
+        split_document,
+        create_vectorstore,
+        ask_single_doc
+    )
+
+    st.subheader("Upload Document")
+
+    uploaded_file = st.file_uploader(
+        "Upload PDF, TXT, or DOCX",
+        type=["pdf", "txt", "docx"]
+    )
+
+    # ---------------------------
+    # Ensure chat exists
+    # ---------------------------
+    if st.session_state.current_chat is None:
+        chat_id = f"Chat {len(st.session_state.chat_sessions) + 1}"
+        st.session_state.chat_sessions[chat_id] = []
+        st.session_state.current_chat = chat_id
+
+    chat_id = st.session_state.current_chat
+
+
+    # ---------------------------
+    # Process document
+    # ---------------------------
+    if uploaded_file:
+
+        filename = uploaded_file.name
+        st.success(f"Document loaded: {filename}")
+
+        if st.session_state.uploaded_files.get(chat_id) != filename:
+
+            with st.spinner("Processing document..."):
+
+                docs = load_single_document(uploaded_file)
+                chunks = split_document(docs)
+
+                st.session_state.vectorstores[chat_id] = create_vectorstore(chunks)
+
+            st.session_state.uploaded_files[chat_id] = filename
+            st.success("Document processed successfully!")
+
+
+    # ---------------------------
+    # Show chat if vectorstore exists
+    # ---------------------------
+    if chat_id in st.session_state.vectorstores:
 
         history = get_chat_history(chat_id)
 
-        file_path = f"logs/{chat_id}.json"
+        for role, message in history:
+            with st.chat_message(role):
+                st.write(message)
 
-        with open(file_path, "w", encoding="utf-8") as f:
-            json.dump(history, f, indent=4)
+        user_question = st.chat_input("Ask about this document")
 
-        st.success(f"Conversation saved to {file_path}")
+        if user_question:
+
+            with st.chat_message("user"):
+                st.write(user_question)
+
+            save_message(chat_id, "user", user_question)
+
+            with st.spinner("🤖 Generating answer..."):
+
+                vectorstore = st.session_state.vectorstores[chat_id]
+
+                answer = ask_single_doc(
+                    vectorstore,
+                    user_question
+                )
+
+            with st.chat_message("assistant"):
+                st.write(answer)
+
+            save_message(chat_id, "assistant", answer)
+
+
+# ---------------------------
+# Export Conversation
+# ---------------------------
+st.divider()
+
+col1, col2 = st.columns(2)
+
+with col1:
+
+    if st.button("Export Chat History"):
+
+        if st.session_state.current_chat:
+
+            history = get_chat_history(
+                st.session_state.current_chat
+            )
+
+            os.makedirs("logs", exist_ok=True)
+
+            file_path = f"logs/{st.session_state.current_chat}.json"
+
+            with open(file_path, "w", encoding="utf-8") as f:
+                json.dump(history, f, indent=4)
+
+            st.success(f"Chat exported to {file_path}")
+
+
+with col2:
+    st.caption("Built with LangChain • FAISS • Gemini • Streamlit")
