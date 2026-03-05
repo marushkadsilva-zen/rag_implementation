@@ -1,5 +1,9 @@
 # streamlit_app.py
 
+from database import init_db, save_message, get_chat_history, clear_chat
+
+init_db()
+
 import os
 import json
 import streamlit as st
@@ -107,7 +111,6 @@ if st.session_state.current_chat is None:
     st.session_state.current_chat = chat_id
 
 chat_id = st.session_state.current_chat
-chat_history = st.session_state.chat_sessions[chat_id]
 
 
 # ---------------------------
@@ -133,11 +136,13 @@ if uploaded_file:
 
 
     # ---------------------------
-    # Display Chat History
+    # Display Chat History (SQLite)
     # ---------------------------
-    for message in chat_history:
-        with st.chat_message(message["role"]):
-            st.write(message["content"])
+    history = get_chat_history(chat_id)
+
+    for role, message in history:
+        with st.chat_message(role):
+            st.write(message)
 
 
     # ---------------------------
@@ -147,13 +152,12 @@ if uploaded_file:
 
     if user_question:
 
+        # Show user message
         with st.chat_message("user"):
             st.write(user_question)
 
-        chat_history.append({
-            "role": "user",
-            "content": user_question
-        })
+        # Save to SQLite
+        save_message(chat_id, "user", user_question)
 
         with st.spinner("Thinking..."):
 
@@ -164,13 +168,12 @@ if uploaded_file:
                 user_question
             )
 
+        # Show assistant response
         with st.chat_message("assistant"):
             st.write(answer)
 
-        chat_history.append({
-            "role": "assistant",
-            "content": answer
-        })
+        # Save assistant response
+        save_message(chat_id, "assistant", answer)
 
 
 # ---------------------------
@@ -181,7 +184,7 @@ col1, col2 = st.columns(2)
 # Clear Chat
 with col1:
     if st.button("Clear Chat"):
-        st.session_state.chat_sessions[chat_id] = []
+        clear_chat(chat_id)
         st.rerun()
 
 # Save Conversation
@@ -190,9 +193,11 @@ with col2:
 
         os.makedirs("logs", exist_ok=True)
 
+        history = get_chat_history(chat_id)
+
         file_path = f"logs/{chat_id}.json"
 
         with open(file_path, "w", encoding="utf-8") as f:
-            json.dump(chat_history, f, indent=4)
+            json.dump(history, f, indent=4)
 
         st.success(f"Conversation saved to {file_path}")
