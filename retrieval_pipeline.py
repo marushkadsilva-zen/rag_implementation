@@ -37,19 +37,52 @@ model = ChatGoogleGenerativeAI(
 )
 
 # ✅ Strong anti-hallucination prompt
+# prompt = PromptTemplate(
+#     template="""
+# You are a helpful assistant.
+
+# Use the provided context to answer the question.
+# You may paraphrase and summarize the context.
+
+# If the context contains partial relevant information,
+# use it to construct the best possible answer.
+
+# Only say:
+# "I don't know based on the provided documents."
+# if the context is completely unrelated.
+
+# Context:
+# {context}
+
+# Question:
+# {question}
+
+# Answer:
+# """,
+#     input_variables=["context", "question"]
+# )
 prompt = PromptTemplate(
     template="""
 You are a helpful assistant.
 
-Use the provided context to answer the question.
-You may paraphrase and summarize the context.
+You have access to:
 
-If the context contains partial relevant information,
-use it to construct the best possible answer.
+1. Previous conversation history
+2. Retrieved document context
 
-Only say:
-"I don't know based on the provided documents."
-if the context is completely unrelated.
+Use BOTH to answer the question.
+
+If the answer exists in the conversation history,
+use that information.
+
+If the answer exists in the document context,
+use that.
+
+If neither contains the answer say:
+"I don't know."
+
+Conversation History:
+{history}
 
 Context:
 {context}
@@ -59,21 +92,36 @@ Question:
 
 Answer:
 """,
-    input_variables=["context", "question"]
+    input_variables=["history", "context", "question"]
 )
-
 chain = prompt | model | StrOutputParser()
 
 
-def ask_question(question: str):
+# def ask_question(question: str):
+#     docs = retriever.invoke(question)
+
+#     if not docs:
+#         return "I don't know .", []
+
+#     context = "\n\n".join(doc.page_content for doc in docs)
+#     print(context)
+#     answer = chain.invoke({
+#         "context": context,
+#         "question": question
+#     })
+
+#     return answer.strip(), docs
+def ask_question(question: str, history=None):
+
     docs = retriever.invoke(question)
 
-    if not docs:
-        return "I don't know .", []
-
     context = "\n\n".join(doc.page_content for doc in docs)
-    print(context)
+
+    if history is None:
+        history = ""
+
     answer = chain.invoke({
+        "history": history,
         "context": context,
         "question": question
     })

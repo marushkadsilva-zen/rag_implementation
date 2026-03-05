@@ -88,6 +88,60 @@ tab1, tab2 = st.tabs([
 ])
 
 
+# # =====================================================
+# # MULTI DOCUMENT RAG
+# # =====================================================
+# with tab1:
+
+#     st.subheader("Knowledge Base Chat")
+
+#     multi_chat_id = "multi_doc_chat"
+
+#     history = get_multi_doc_history(multi_chat_id)
+
+#     for role, message in history:
+#         with st.chat_message(role):
+#             st.write(message)
+
+#     query = st.chat_input("Ask a question about your documents")
+
+#     if query:
+
+#         with st.chat_message("user"):
+#             st.write(query)
+
+#         save_multi_doc_message(multi_chat_id, "user", query)
+
+#         with st.spinner("🔎 Searching knowledge base..."):
+#             answer, docs = ask_question(query)
+
+#         with st.chat_message("assistant"):
+#             st.write(answer)
+
+#             if docs:
+#                 with st.expander("Sources"):
+#                     for doc in docs:
+#                         st.write(
+#                             os.path.basename(
+#                                 doc.metadata.get("source", "Unknown")
+#                             )
+#                         )
+
+#         sources = ", ".join(
+#             os.path.basename(doc.metadata.get("source", "Unknown"))
+#             for doc in docs
+#         )
+
+#         save_multi_doc_message(
+#             multi_chat_id,
+#             "assistant",
+#             answer,
+#             sources
+#         )
+
+#     if st.button("Clear Multi Document Chat"):
+#         clear_multi_doc_chat(multi_chat_id)
+#         st.rerun()
 # =====================================================
 # MULTI DOCUMENT RAG
 # =====================================================
@@ -99,9 +153,15 @@ with tab1:
 
     history = get_multi_doc_history(multi_chat_id)
 
+    # Show previous messages
     for role, message in history:
         with st.chat_message(role):
             st.write(message)
+
+    # Format history for LLM memory
+    formatted_history = "\n".join(
+        f"{role}: {message}" for role, message in history
+    )
 
     query = st.chat_input("Ask a question about your documents")
 
@@ -113,7 +173,11 @@ with tab1:
         save_multi_doc_message(multi_chat_id, "user", query)
 
         with st.spinner("🔎 Searching knowledge base..."):
-            answer, docs = ask_question(query)
+
+            answer, docs = ask_question(
+                query,
+                formatted_history
+            )
 
         with st.chat_message("assistant"):
             st.write(answer)
@@ -142,7 +206,6 @@ with tab1:
     if st.button("Clear Multi Document Chat"):
         clear_multi_doc_chat(multi_chat_id)
         st.rerun()
-
 
 # =====================================================
 # SINGLE DOCUMENT CHAT
