@@ -1,7 +1,14 @@
 # streamlit_app.py
 
 from database import init_db, save_message, get_chat_history, clear_chat
+from multi_doc_db import (
+    init_multi_doc_db,
+    save_multi_doc_message,
+    get_multi_doc_history,
+    clear_multi_doc_chat
+)
 
+init_multi_doc_db()
 init_db()
 
 import os
@@ -21,11 +28,9 @@ if "chat_sessions" not in st.session_state:
 if "current_chat" not in st.session_state:
     st.session_state.current_chat = None
 
-# store vectorstores per chat
 if "vectorstores" not in st.session_state:
     st.session_state.vectorstores = {}
 
-# track uploaded files per chat
 if "uploaded_files" not in st.session_state:
     st.session_state.uploaded_files = {}
 
@@ -49,7 +54,7 @@ if st.session_state.current_chat:
 
 
 # ---------------------------
-# Cache QA System
+# Load Multi-Doc QA System
 # ---------------------------
 @st.cache_resource
 def load_qa_system():
@@ -61,22 +66,52 @@ ask_question = load_qa_system()
 
 
 # ---------------------------
-# Multi-Document RAG UI
+# Multi-Document RAG Section
 # ---------------------------
-query = st.text_input("Ask a question")
+st.header("📚 Multi Document Question Answering")
 
-if st.button("Submit") and query:
+multi_chat_id = "multi_doc_chat"
+
+# display history
+history = get_multi_doc_history(multi_chat_id)
+
+for role, message in history:
+    with st.chat_message(role):
+        st.write(message)
+
+query = st.chat_input("Ask a question about the knowledge base")
+
+if query:
+
+    with st.chat_message("user"):
+        st.write(query)
+
+    save_multi_doc_message(multi_chat_id, "user", query)
+
     with st.spinner("Thinking..."):
+
         answer, docs = ask_question(query)
 
-    st.subheader("Answer")
-    st.write(answer)
+    with st.chat_message("assistant"):
+        st.write(answer)
 
-    if docs:
-        st.subheader("Sources")
-        for doc in docs:
-            source = os.path.basename(doc.metadata.get("source", "Unknown"))
-            st.write(f"- {source}")
+    sources = ", ".join(
+        os.path.basename(doc.metadata.get("source", "Unknown"))
+        for doc in docs
+    )
+
+    save_multi_doc_message(
+        multi_chat_id,
+        "assistant",
+        answer,
+        sources
+    )
+
+
+# clear multi doc history
+if st.button("Clear Multi Document Chat"):
+    clear_multi_doc_chat(multi_chat_id)
+    st.rerun()
 
 
 # ---------------------------
@@ -120,7 +155,6 @@ if uploaded_file:
 
     filename = uploaded_file.name
 
-    # rebuild vectorstore if new document uploaded
     if st.session_state.uploaded_files.get(chat_id) != filename:
 
         with st.spinner("Processing document..."):
@@ -136,7 +170,7 @@ if uploaded_file:
 
 
     # ---------------------------
-    # Display Chat History (SQLite)
+    # Display Chat History
     # ---------------------------
     history = get_chat_history(chat_id)
 
@@ -152,11 +186,9 @@ if uploaded_file:
 
     if user_question:
 
-        # Show user message
         with st.chat_message("user"):
             st.write(user_question)
 
-        # Save to SQLite
         save_message(chat_id, "user", user_question)
 
         with st.spinner("Thinking..."):
@@ -168,11 +200,9 @@ if uploaded_file:
                 user_question
             )
 
-        # Show assistant response
         with st.chat_message("assistant"):
             st.write(answer)
 
-        # Save assistant response
         save_message(chat_id, "assistant", answer)
 
 
@@ -181,13 +211,11 @@ if uploaded_file:
 # ---------------------------
 col1, col2 = st.columns(2)
 
-# Clear Chat
 with col1:
-    if st.button("Clear Chat"):
+    if st.button("Clear Document Chat"):
         clear_chat(chat_id)
         st.rerun()
 
-# Save Conversation
 with col2:
     if st.button("Save Conversation"):
 
