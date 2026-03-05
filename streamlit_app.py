@@ -1,5 +1,6 @@
 # streamlit_app.py
 
+from memory_extractor import extract_memory
 from database import init_db, save_message, get_chat_history, clear_chat
 from multi_doc_db import (
     init_multi_doc_db,
@@ -11,9 +12,13 @@ from multi_doc_db import (
 init_multi_doc_db()
 init_db()
 
+from memory_db import init_memory_db
+init_memory_db()
+
 import os
 import json
 import streamlit as st
+
 
 st.set_page_config(
     page_title="RAG AI Assistant",
@@ -26,7 +31,7 @@ st.caption("Document Question Answering using RAG + Gemini + FAISS")
 
 
 # ---------------------------
-# Chat Session Manager
+# Session Variables
 # ---------------------------
 if "chat_sessions" not in st.session_state:
     st.session_state.chat_sessions = {}
@@ -39,6 +44,13 @@ if "vectorstores" not in st.session_state:
 
 if "uploaded_files" not in st.session_state:
     st.session_state.uploaded_files = {}
+
+# UI-only chat history
+if "multi_doc_ui_history" not in st.session_state:
+    st.session_state.multi_doc_ui_history = None
+
+if "single_doc_ui_history" not in st.session_state:
+    st.session_state.single_doc_ui_history = None
 
 
 # ---------------------------
@@ -63,7 +75,7 @@ st.sidebar.subheader("⚙ Controls")
 
 if st.sidebar.button("Clear Document Chat"):
     if st.session_state.current_chat:
-        clear_chat(st.session_state.current_chat)
+        st.session_state.single_doc_ui_history = []
         st.rerun()
 
 
@@ -88,60 +100,6 @@ tab1, tab2 = st.tabs([
 ])
 
 
-# # =====================================================
-# # MULTI DOCUMENT RAG
-# # =====================================================
-# with tab1:
-
-#     st.subheader("Knowledge Base Chat")
-
-#     multi_chat_id = "multi_doc_chat"
-
-#     history = get_multi_doc_history(multi_chat_id)
-
-#     for role, message in history:
-#         with st.chat_message(role):
-#             st.write(message)
-
-#     query = st.chat_input("Ask a question about your documents")
-
-#     if query:
-
-#         with st.chat_message("user"):
-#             st.write(query)
-
-#         save_multi_doc_message(multi_chat_id, "user", query)
-
-#         with st.spinner("🔎 Searching knowledge base..."):
-#             answer, docs = ask_question(query)
-
-#         with st.chat_message("assistant"):
-#             st.write(answer)
-
-#             if docs:
-#                 with st.expander("Sources"):
-#                     for doc in docs:
-#                         st.write(
-#                             os.path.basename(
-#                                 doc.metadata.get("source", "Unknown")
-#                             )
-#                         )
-
-#         sources = ", ".join(
-#             os.path.basename(doc.metadata.get("source", "Unknown"))
-#             for doc in docs
-#         )
-
-#         save_multi_doc_message(
-#             multi_chat_id,
-#             "assistant",
-#             answer,
-#             sources
-#         )
-
-#     if st.button("Clear Multi Document Chat"):
-#         clear_multi_doc_chat(multi_chat_id)
-#         st.rerun()
 # =====================================================
 # MULTI DOCUMENT RAG
 # =====================================================
@@ -151,14 +109,19 @@ with tab1:
 
     multi_chat_id = "multi_doc_chat"
 
-    history = get_multi_doc_history(multi_chat_id)
+    # Load DB history only once
+    if st.session_state.multi_doc_ui_history is None:
+        st.session_state.multi_doc_ui_history = get_multi_doc_history(multi_chat_id)
 
-    # Show previous messages
-    for role, message in history:
-        with st.chat_message(role):
-            st.write(message)
+    history = st.session_state.multi_doc_ui_history
 
-    # Format history for LLM memory
+    chat_container = st.container()
+
+    with chat_container:
+        for role, message in history:
+            with st.chat_message(role):
+                st.write(message)
+
     formatted_history = "\n".join(
         f"{role}: {message}" for role, message in history
     )
@@ -167,29 +130,30 @@ with tab1:
 
     if query:
 
-        with st.chat_message("user"):
-            st.write(query)
-
         save_multi_doc_message(multi_chat_id, "user", query)
+        extract_memory(query)
+
+        st.session_state.multi_doc_ui_history.append(("user", query))
+
+        with chat_container:
+            with st.chat_message("user"):
+                st.write(query)
 
         with st.spinner("🔎 Searching knowledge base..."):
+            answer, docs = ask_question(query, formatted_history)
 
-            answer, docs = ask_question(
-                query,
-                formatted_history
-            )
+        with chat_container:
+            with st.chat_message("assistant"):
+                st.write(answer)
 
-        with st.chat_message("assistant"):
-            st.write(answer)
-
-            if docs:
-                with st.expander("Sources"):
-                    for doc in docs:
-                        st.write(
-                            os.path.basename(
-                                doc.metadata.get("source", "Unknown")
+                if docs:
+                    with st.expander("Sources"):
+                        for doc in docs:
+                            st.write(
+                                os.path.basename(
+                                    doc.metadata.get("source", "Unknown")
+                                )
                             )
-                        )
 
         sources = ", ".join(
             os.path.basename(doc.metadata.get("source", "Unknown"))
@@ -203,9 +167,14 @@ with tab1:
             sources
         )
 
-    if st.button("Clear Multi Document Chat"):
-        clear_multi_doc_chat(multi_chat_id)
+        st.session_state.multi_doc_ui_history.append(("assistant", answer))
+
         st.rerun()
+
+    if st.button("Clear Multi Document Chat"):
+        st.session_state.multi_doc_ui_history = []
+        st.rerun()
+
 
 # =====================================================
 # SINGLE DOCUMENT CHAT
@@ -226,9 +195,6 @@ with tab2:
         type=["pdf", "txt", "docx"]
     )
 
-    # ---------------------------
-    # Ensure chat exists
-    # ---------------------------
     if st.session_state.current_chat is None:
         chat_id = f"Chat {len(st.session_state.chat_sessions) + 1}"
         st.session_state.chat_sessions[chat_id] = []
@@ -236,10 +202,6 @@ with tab2:
 
     chat_id = st.session_state.current_chat
 
-
-    # ---------------------------
-    # Process document
-    # ---------------------------
     if uploaded_file:
 
         filename = uploaded_file.name
@@ -257,13 +219,12 @@ with tab2:
             st.session_state.uploaded_files[chat_id] = filename
             st.success("Document processed successfully!")
 
-
-    # ---------------------------
-    # Show chat if vectorstore exists
-    # ---------------------------
     if chat_id in st.session_state.vectorstores:
 
-        history = get_chat_history(chat_id)
+        if st.session_state.single_doc_ui_history is None:
+            st.session_state.single_doc_ui_history = get_chat_history(chat_id)
+
+        history = st.session_state.single_doc_ui_history
 
         for role, message in history:
             with st.chat_message(role):
@@ -277,6 +238,7 @@ with tab2:
                 st.write(user_question)
 
             save_message(chat_id, "user", user_question)
+            st.session_state.single_doc_ui_history.append(("user", user_question))
 
             with st.spinner("🤖 Generating answer..."):
 
@@ -291,6 +253,7 @@ with tab2:
                 st.write(answer)
 
             save_message(chat_id, "assistant", answer)
+            st.session_state.single_doc_ui_history.append(("assistant", answer))
 
 
 # ---------------------------
