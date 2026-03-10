@@ -143,4 +143,4 @@ def ask_single_doc(vectorstore, question):
         "question": question
     })
 
-    return answer
+    return answer,docs

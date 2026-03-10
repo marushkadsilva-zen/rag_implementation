@@ -30,9 +30,10 @@ st.title("🤖 RAG AI Assistant")
 st.caption("Document Question Answering using RAG + Gemini + FAISS")
 
 
-# ---------------------------
-# Session Variables
-# ---------------------------
+# --------------------------------------------------
+# SESSION VARIABLES
+# --------------------------------------------------
+
 if "chat_sessions" not in st.session_state:
     st.session_state.chat_sessions = {}
 
@@ -45,7 +46,6 @@ if "vectorstores" not in st.session_state:
 if "uploaded_files" not in st.session_state:
     st.session_state.uploaded_files = {}
 
-# UI-only chat history
 if "multi_doc_ui_history" not in st.session_state:
     st.session_state.multi_doc_ui_history = None
 
@@ -53,9 +53,10 @@ if "single_doc_ui_history" not in st.session_state:
     st.session_state.single_doc_ui_history = None
 
 
-# ---------------------------
-# Sidebar
-# ---------------------------
+# --------------------------------------------------
+# SIDEBAR
+# --------------------------------------------------
+
 st.sidebar.title("💬 Chat Sessions")
 
 if st.sidebar.button("➕ New Chat"):
@@ -79,9 +80,10 @@ if st.sidebar.button("Clear Document Chat"):
         st.rerun()
 
 
-# ---------------------------
-# Load Multi-Doc QA System
-# ---------------------------
+# --------------------------------------------------
+# LOAD MULTI DOC QA SYSTEM
+# --------------------------------------------------
+
 @st.cache_resource
 def load_qa_system():
     from retrieval_pipeline import ask_question
@@ -91,25 +93,26 @@ def load_qa_system():
 ask_question = load_qa_system()
 
 
-# ---------------------------
-# Tabs
-# ---------------------------
+# --------------------------------------------------
+# TABS
+# --------------------------------------------------
+
 tab1, tab2 = st.tabs([
     "📚 Multi Document QA",
     "📄 Single Document Chat"
 ])
 
 
-# =====================================================
+# ==================================================
 # MULTI DOCUMENT RAG
-# =====================================================
+# ==================================================
+
 with tab1:
 
     st.subheader("Knowledge Base Chat")
 
     multi_chat_id = "multi_doc_chat"
 
-    # Load DB history only once
     if st.session_state.multi_doc_ui_history is None:
         st.session_state.multi_doc_ui_history = get_multi_doc_history(multi_chat_id)
 
@@ -146,14 +149,23 @@ with tab1:
             with st.chat_message("assistant"):
                 st.write(answer)
 
+                # SHOW SOURCES
                 if docs:
-                    with st.expander("Sources"):
+                    with st.expander("📄 Sources"):
                         for doc in docs:
                             st.write(
                                 os.path.basename(
                                     doc.metadata.get("source", "Unknown")
                                 )
                             )
+
+                # SHOW RETRIEVED CHUNKS
+                with st.expander("🔎 Retrieved Context"):
+                    for i, doc in enumerate(docs):
+                        st.markdown(f"### Chunk {i+1}")
+                        st.write(doc.page_content[:500])
+                        st.caption(doc.metadata)
+                        st.divider()
 
         sources = ", ".join(
             os.path.basename(doc.metadata.get("source", "Unknown"))
@@ -176,9 +188,10 @@ with tab1:
         st.rerun()
 
 
-# =====================================================
+# ==================================================
 # SINGLE DOCUMENT CHAT
-# =====================================================
+# ==================================================
+
 with tab2:
 
     from single_doc_chat import (
@@ -244,7 +257,7 @@ with tab2:
 
                 vectorstore = st.session_state.vectorstores[chat_id]
 
-                answer = ask_single_doc(
+                answer, docs = ask_single_doc(
                     vectorstore,
                     user_question
                 )
@@ -252,13 +265,22 @@ with tab2:
             with st.chat_message("assistant"):
                 st.write(answer)
 
+                # SHOW RETRIEVED CHUNKS
+                with st.expander("🔎 Retrieved Chunks"):
+                    for i, doc in enumerate(docs):
+                        st.markdown(f"### Chunk {i+1}")
+                        st.write(doc.page_content[:500])
+                        st.caption(doc.metadata)
+                        st.divider()
+
             save_message(chat_id, "assistant", answer)
             st.session_state.single_doc_ui_history.append(("assistant", answer))
 
 
-# ---------------------------
-# Export Conversation
-# ---------------------------
+# --------------------------------------------------
+# EXPORT CHAT HISTORY
+# --------------------------------------------------
+
 st.divider()
 
 col1, col2 = st.columns(2)
