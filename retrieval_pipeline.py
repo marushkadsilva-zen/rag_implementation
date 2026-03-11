@@ -1,89 +1,65 @@
-import os
-from dotenv import load_dotenv
-
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.vectorstores import FAISS
+from langchain_qdrant import QdrantVectorStore
+from qdrant_client import QdrantClient
 
 from langchain_google_genai import ChatGoogleGenerativeAI
-
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
+from dotenv import load_dotenv
 
 load_dotenv()
 
-
-# --------------------------------------------------
+# --------------------------------
 # EMBEDDINGS
-# --------------------------------------------------
+# --------------------------------
 
 embeddings = HuggingFaceEmbeddings(
     model_name="BAAI/bge-small-en-v1.5"
 )
 
 
-# --------------------------------------------------
-# LOAD VECTOR STORE
-# --------------------------------------------------
+# --------------------------------
+# LOAD QDRANT DATABASE
+# --------------------------------
 
-print("Loading FAISS vector database...")
+# IMPORTANT: must match ingestion pipeline
+client = QdrantClient(path="qdrant_db")
 
-vectorstore = FAISS.load_local(
-    "db/faiss_index",
-    embeddings,
-    allow_dangerous_deserialization=True
+vectorstore = QdrantVectorStore(
+    client=client,
+    collection_name="rag_collection",
+    embedding=embeddings
 )
 
-print("Vector DB loaded!")
 
-
-# --------------------------------------------------
+# --------------------------------
 # RETRIEVER
-# --------------------------------------------------
+# --------------------------------
 
 retriever = vectorstore.as_retriever(
-    search_type="mmr",
-    search_kwargs={
-        "k": 10,
-        "fetch_k": 20
-    }
+    search_kwargs={"k":5}
 )
 
 
-# --------------------------------------------------
-# GEMINI MODEL
-# --------------------------------------------------
+# --------------------------------
+# LLM
+# --------------------------------
 
 model = ChatGoogleGenerativeAI(
     model="gemini-2.5-flash",
-    temperature=0.3,
-    max_tokens=1500
+    temperature=0.3
 )
 
 
-# --------------------------------------------------
+# --------------------------------
 # PROMPT
-# --------------------------------------------------
+# --------------------------------
 
 prompt = PromptTemplate(
     template="""
-You are a helpful AI assistant answering questions from research documents.
+Use the context to answer the question.
 
-Use ONLY the provided context to answer.
-
-The context may contain:
-- TEXT paragraphs
-- TABLE INFORMATION
-
-If a table appears:
-1. Explain what the table represents
-2. Describe the columns
-3. Interpret the rows and values
-
-If the answer is not present in the context say:
-"I don't know."
-
-Conversation History:
-{history}
+If the answer is not in the context say "I don't know".
 
 Context:
 {context}
@@ -93,66 +69,27 @@ Question:
 
 Answer:
 """,
-    input_variables=["history", "context", "question"]
+    input_variables=["context","question"]
 )
-
 
 chain = prompt | model | StrOutputParser()
 
 
-# --------------------------------------------------
-# BUILD CONTEXT FROM RETRIEVED DOCS
-# --------------------------------------------------
+# --------------------------------
+# ASK QUESTION
+# --------------------------------
 
-def build_context(docs):
-
-    context_parts = []
-
-    for i, doc in enumerate(docs, start=1):
-
-        source = doc.metadata.get("source", "unknown")
-        page = doc.metadata.get("page", "unknown")
-        content_type = doc.metadata.get("content_type", "text")
-
-        if content_type == "table":
-            prefix = "TABLE INFORMATION"
-        else:
-            prefix = "TEXT"
-
-        block = f"""
-DOCUMENT {i}
-
-SOURCE: {os.path.basename(source)}
-PAGE: {page}
-TYPE: {prefix}
-
-CONTENT:
-{doc.page_content}
-"""
-
-        context_parts.append(block)
-
-    return "\n\n=============================\n\n".join(context_parts)
-
-
-# --------------------------------------------------
-# MAIN QUESTION FUNCTION
-# --------------------------------------------------
-
-def ask_question(question: str, history: str = ""):
-
-    print("\nSearching vector database...")
+def ask_question(question, history=""):
 
     docs = retriever.invoke(question)
 
-    print(f"Retrieved {len(docs)} chunks")
-
-    context = build_context(docs)
+    context = "\n\n".join(
+        doc.page_content for doc in docs
+    )
 
     answer = chain.invoke({
-        "history": history,
         "context": context,
         "question": question
     })
 
-    return answer.strip(), docs
+    return answer, docs

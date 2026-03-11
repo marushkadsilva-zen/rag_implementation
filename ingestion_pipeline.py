@@ -5,7 +5,9 @@ from langchain_core.documents import Document
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.vectorstores import FAISS
+
+from qdrant_client import QdrantClient
+from langchain_qdrant import Qdrant
 from langchain_community.document_loaders import TextLoader
 
 # --------------------------------------------------
@@ -14,51 +16,71 @@ from langchain_community.document_loaders import TextLoader
 
 def is_markdown_table(text):
 
-    if "|" in text and "---" in text:
-        return True
-
-    return False
+    return "|" in text and "---" in text
 
 
 # --------------------------------------------------
-# TABLE -> SEMANTIC TEXT
+# TABLE → SEMANTIC TEXT
 # --------------------------------------------------
 
-def markdown_table_to_text(table):
+# def markdown_table_to_text(table):
+
+#     lines = table.split("\n")
+
+#     headers = [h.strip() for h in lines[0].split("|") if h.strip()]
+
+#     rows = lines[2:]
+
+#     output = []
+
+#     output.append("Table with columns: " + ", ".join(headers))
+
+#     for r in rows:
+
+#         cells = [c.strip() for c in r.split("|") if c.strip()]
+
+#         if len(cells) != len(headers):
+#             continue
+
+#         row_text = ", ".join(
+#             f"{headers[i]} = {cells[i]}" for i in range(len(headers))
+#         )
+
+#         output.append(row_text)
+
+#     return "\n".join(output)
+
+def markdown_table_to_kv(table):
 
     lines = table.split("\n")
 
+    # Extract headers
     headers = [h.strip() for h in lines[0].split("|") if h.strip()]
 
     rows = lines[2:]
 
     output = []
 
-    output.append("Table with columns: " + ", ".join(headers))
-
-    for r in rows:
+    for i, r in enumerate(rows):
 
         cells = [c.strip() for c in r.split("|") if c.strip()]
 
         if len(cells) != len(headers):
             continue
 
-        row_text = ", ".join(
-            f"{headers[i]} = {cells[i]}" for i in range(len(headers))
-        )
+        output.append(f"Row {i+1}:")
 
-        output.append(row_text)
+        for j in range(len(headers)):
+            output.append(f"{headers[j]}: {cells[j]}")
+
+        output.append("")  # spacing
 
     return "\n".join(output)
-
-
 # --------------------------------------------------
-# EXTRACT PDF
+# PDF EXTRACTION
 # --------------------------------------------------
 
 def extract_pdf(file_path):
-
-    print(f"\nProcessing PDF: {file_path}")
 
     converter = DocumentConverter()
 
@@ -77,10 +99,9 @@ def extract_pdf(file_path):
         if not text:
             continue
 
-        # TABLE
         if is_markdown_table(text):
 
-            table_text = markdown_table_to_text(text)
+            table_text = markdown_table_to_kv(text)
 
             documents.append(
                 Document(
@@ -93,7 +114,6 @@ def extract_pdf(file_path):
                 )
             )
 
-        # TEXT
         else:
 
             documents.append(
@@ -106,8 +126,6 @@ def extract_pdf(file_path):
                     }
                 )
             )
-
-    print(f"Extracted {len(documents)} blocks")
 
     return documents
 
@@ -130,10 +148,7 @@ def extract_pdf(file_path):
 
 #             documents.extend(docs)
 
-#     print(f"\nTotal extracted elements: {len(documents)}")
-
 #     return documents
-
 
 def load_documents(folder="docs"):
 
@@ -148,6 +163,8 @@ def load_documents(folder="docs"):
         # -----------------------
         if file.endswith(".pdf"):
 
+            print(f"Processing PDF: {file}")
+
             docs = extract_pdf(path)
 
             documents.extend(docs)
@@ -157,24 +174,30 @@ def load_documents(folder="docs"):
         # -----------------------
         elif file.endswith(".txt"):
 
-            print(f"\nProcessing TXT: {path}")
+            print(f"Processing TXT: {file}")
 
             loader = TextLoader(path, encoding="utf-8")
 
-            docs = loader.load()
+            txt_docs = loader.load()
 
-            for d in docs:
+            for d in txt_docs:
 
-                d.metadata["source"] = path
-                d.metadata["content_type"] = "text"
+                documents.append(
+                    Document(
+                        page_content=d.page_content,
+                        metadata={
+                            "source": path,
+                            "content_type": "text"
+                        }
+                    )
+                )
 
-            documents.extend(docs)
-
-    print(f"\nTotal extracted elements: {len(documents)}")
+    print(f"\nTotal documents loaded: {len(documents)}")
 
     return documents
+
 # --------------------------------------------------
-# SPLIT TEXT ONLY
+# SPLIT DOCUMENTS
 # --------------------------------------------------
 
 def split_documents(documents):
@@ -198,48 +221,47 @@ def split_documents(documents):
 
             chunks.extend(splits)
 
-    print(f"\nTotal chunks created: {len(chunks)}")
-
     return chunks
+
+
 # --------------------------------------------------
-#  PRINT CHUNKS (DEBUGGING)
-# --------------------------------------------------
-
-def print_chunks(chunks, limit=10):
-
-    print("\nPreview of chunks:\n")
-
-    for i, chunk in enumerate(chunks[:limit]):
-
-        print(f"\nChunk {i+1}")
-
-        print("Metadata:", chunk.metadata)
-
-        print("Content:\n", chunk.page_content[:500])
-
-        print("--------------------------------------------------")
-# --------------------------------------------------
-# CREATE VECTOR STORE
+# CREATE QDRANT VECTOR STORE
 # --------------------------------------------------
 
-def create_vectorstore(chunks):
+from qdrant_client import QdrantClient
+from qdrant_client.models import Distance, VectorParams
+from langchain_qdrant import QdrantVectorStore
 
-    print("\nCreating embeddings...")
+def create_qdrant_db(chunks):
+
+    print("\nCreating Qdrant database...\n")
 
     embeddings = HuggingFaceEmbeddings(
         model_name="BAAI/bge-small-en-v1.5"
     )
 
-    vectorstore = FAISS.from_documents(
-        chunks,
-        embeddings
+    client = QdrantClient(path="qdrant_db")
+
+    client.create_collection(
+        collection_name="rag_collection",
+        vectors_config=VectorParams(
+            size=384,
+            distance=Distance.COSINE
+        )
     )
 
-    os.makedirs("db", exist_ok=True)
+    vectorstore = QdrantVectorStore(
+        client=client,
+        collection_name="rag_collection",
+        embedding=embeddings
+    )
 
-    vectorstore.save_local("db/faiss_index")
+    vectorstore.add_documents(chunks)
 
-    print("\nFAISS index created successfully!")
+    print("Qdrant database created successfully!")
+
+    return vectorstore
+
 
 # --------------------------------------------------
 # MAIN
@@ -249,21 +271,8 @@ if __name__ == "__main__":
 
     docs = load_documents("docs")
 
-    print("\nSample document preview:\n")
-
-    for d in docs[:3]:
-
-        print(d.metadata)
-
-        print(d.page_content[:300])
-
-        print("---------------")
-
-    # SPLIT DOCUMENTS
     chunks = split_documents(docs)
 
-    # PRINT CHUNKS
-    print_chunks(chunks, limit=10)
+    vectorstore = create_qdrant_db(chunks)
 
-    # CREATE VECTOR DATABASE
-    create_vectorstore(chunks)
+    print("Documents indexed in Qdrant")
