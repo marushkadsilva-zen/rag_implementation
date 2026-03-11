@@ -1,1 +1,22 @@
-[]
+[
+    [
+        "user",
+        "what is there in this document"
+    ],
+    [
+        "assistant",
+        "The document contains information about Musaib Ahmed, including his contact details, professional summary, educational background (Bachelor of Engineering, Pre-University, Secondary School), projects (Gaze-Based Cheating Detection, Handwritten Digit Recognition, Text-to-Image Generator), skills (programming languages, web development, databases, tools, technologies, soft skills), and participations in various courses and workshops related to machine learning, AI, IoT, Python, HTML, and automation."
+    ],
+    [
+        "user",
+        "What is Attention Is All You Need? Explain the table."
+    ],
+    [
+        "assistant",
+        "I don't know based on the document what \"Attention Is All You Need\" is.\n\nRegarding the table, the document states that Table 3 presents results.\n*   In Table 3 rows (A), the number of attention heads and the attention key and value dimensions are varied, keeping the amount of computation constant. It is noted that single-head attention is 0.9 BLEU worse than the best setting, and quality also drops off with too many heads.\n*   In Table 3 rows (B), it is observed that reducing the attention key size `dk` hurts model quality, which is similar to single-head attention with full dimensionality."
+    ],
+    [
+        "user",
+        "what is Complexity per Layer of self-attention"
+    ]
+]

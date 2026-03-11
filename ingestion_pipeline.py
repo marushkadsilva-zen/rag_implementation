@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 
 from docling.document_converter import DocumentConverter
 from langchain_core.documents import Document
@@ -7,8 +8,13 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 
 from qdrant_client import QdrantClient
-from langchain_qdrant import Qdrant
+from qdrant_client.models import Distance, VectorParams
+from langchain_qdrant import QdrantVectorStore
+
 from langchain_community.document_loaders import TextLoader
+
+load_dotenv()
+
 
 # --------------------------------------------------
 # TABLE DETECTION
@@ -20,41 +26,13 @@ def is_markdown_table(text):
 
 
 # --------------------------------------------------
-# TABLE → SEMANTIC TEXT
+# TABLE → KEY VALUE TEXT
 # --------------------------------------------------
-
-# def markdown_table_to_text(table):
-
-#     lines = table.split("\n")
-
-#     headers = [h.strip() for h in lines[0].split("|") if h.strip()]
-
-#     rows = lines[2:]
-
-#     output = []
-
-#     output.append("Table with columns: " + ", ".join(headers))
-
-#     for r in rows:
-
-#         cells = [c.strip() for c in r.split("|") if c.strip()]
-
-#         if len(cells) != len(headers):
-#             continue
-
-#         row_text = ", ".join(
-#             f"{headers[i]} = {cells[i]}" for i in range(len(headers))
-#         )
-
-#         output.append(row_text)
-
-#     return "\n".join(output)
 
 def markdown_table_to_kv(table):
 
     lines = table.split("\n")
 
-    # Extract headers
     headers = [h.strip() for h in lines[0].split("|") if h.strip()]
 
     rows = lines[2:]
@@ -73,9 +51,11 @@ def markdown_table_to_kv(table):
         for j in range(len(headers)):
             output.append(f"{headers[j]}: {cells[j]}")
 
-        output.append("")  # spacing
+        output.append("")
 
     return "\n".join(output)
+
+
 # --------------------------------------------------
 # PDF EXTRACTION
 # --------------------------------------------------
@@ -134,22 +114,6 @@ def extract_pdf(file_path):
 # LOAD DOCUMENTS
 # --------------------------------------------------
 
-# def load_documents(folder="docs"):
-
-#     documents = []
-
-#     for file in os.listdir(folder):
-
-#         path = os.path.join(folder, file)
-
-#         if file.endswith(".pdf"):
-
-#             docs = extract_pdf(path)
-
-#             documents.extend(docs)
-
-#     return documents
-
 def load_documents(folder="docs"):
 
     documents = []
@@ -158,9 +122,7 @@ def load_documents(folder="docs"):
 
         path = os.path.join(folder, file)
 
-        # -----------------------
         # PDF
-        # -----------------------
         if file.endswith(".pdf"):
 
             print(f"Processing PDF: {file}")
@@ -169,9 +131,7 @@ def load_documents(folder="docs"):
 
             documents.extend(docs)
 
-        # -----------------------
         # TXT
-        # -----------------------
         elif file.endswith(".txt"):
 
             print(f"Processing TXT: {file}")
@@ -195,6 +155,7 @@ def load_documents(folder="docs"):
     print(f"\nTotal documents loaded: {len(documents)}")
 
     return documents
+
 
 # --------------------------------------------------
 # SPLIT DOCUMENTS
@@ -221,27 +182,37 @@ def split_documents(documents):
 
             chunks.extend(splits)
 
+    print(f"\nTotal chunks created: {len(chunks)}")
+
     return chunks
 
 
 # --------------------------------------------------
-# CREATE QDRANT VECTOR STORE
+# CREATE QDRANT CLOUD VECTOR STORE
 # --------------------------------------------------
-
-from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams
-from langchain_qdrant import QdrantVectorStore
 
 def create_qdrant_db(chunks):
 
-    print("\nCreating Qdrant database...\n")
+    print("\nCreating Qdrant Cloud database...\n")
 
     embeddings = HuggingFaceEmbeddings(
         model_name="BAAI/bge-small-en-v1.5"
     )
 
-    client = QdrantClient(path="qdrant_db")
+    client = QdrantClient(
+        url=os.getenv("QDRANT_URL"),
+        api_key=os.getenv("QDRANT_API_KEY"),
+        timeout=60
+    )
 
+    # delete collection if already exists
+    try:
+        client.delete_collection("rag_collection")
+        print("Old collection deleted")
+    except:
+        pass
+
+    # create new collection
     client.create_collection(
         collection_name="rag_collection",
         vectors_config=VectorParams(
@@ -256,9 +227,19 @@ def create_qdrant_db(chunks):
         embedding=embeddings
     )
 
-    vectorstore.add_documents(chunks)
+    print("\nUploading documents in batches...\n")
 
-    print("Qdrant database created successfully!")
+    batch_size = 32
+
+    for i in range(0, len(chunks), batch_size):
+
+        batch = chunks[i:i+batch_size]
+
+        vectorstore.add_documents(batch)
+
+        print(f"Uploaded batch {i//batch_size + 1}")
+
+    print("\nDocuments uploaded to Qdrant Cloud successfully!")
 
     return vectorstore
 
@@ -275,4 +256,4 @@ if __name__ == "__main__":
 
     vectorstore = create_qdrant_db(chunks)
 
-    print("Documents indexed in Qdrant")
+    print("\nDocuments indexed in Qdrant Cloud")
