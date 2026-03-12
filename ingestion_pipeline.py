@@ -1,4 +1,11 @@
 import os
+import cv2
+import pytesseract
+import numpy as np
+
+from pdf2image import convert_from_path
+from PIL import Image
+
 from dotenv import load_dotenv
 
 from docling.document_converter import DocumentConverter
@@ -15,13 +22,15 @@ from langchain_community.document_loaders import TextLoader
 
 load_dotenv()
 
+# Tesseract Path
+pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+
 
 # --------------------------------------------------
 # TABLE DETECTION
 # --------------------------------------------------
 
 def is_markdown_table(text):
-
     return "|" in text and "---" in text
 
 
@@ -54,6 +63,65 @@ def markdown_table_to_kv(table):
         output.append("")
 
     return "\n".join(output)
+
+
+# --------------------------------------------------
+# GRAPH EXTRACTION (NEW)
+# --------------------------------------------------
+
+def extract_graph_data(pdf_path):
+
+    print(f"Extracting graphs from {pdf_path}")
+
+    images = convert_from_path(
+    pdf_path,
+    poppler_path=r"C:\Program Files\Release-25.12.0-0\poppler-25.12.0\Library\bin"
+)
+
+    graph_documents = []
+
+    for page_num, img in enumerate(images):
+
+        img_np = np.array(img)
+
+        gray = cv2.cvtColor(img_np, cv2.COLOR_BGR2GRAY)
+
+        thresh = cv2.adaptiveThreshold(
+            gray,
+            255,
+            cv2.ADAPTIVE_THRESH_MEAN_C,
+            cv2.THRESH_BINARY,
+            11,
+            2
+        )
+
+        text = pytesseract.image_to_string(thresh)
+
+        keywords = [
+            "yield",
+            "inflation",
+            "rate",
+            "%",
+            "spread",
+            "index"
+        ]
+
+        if any(k in text.lower() for k in keywords):
+
+            graph_documents.append(
+                Document(
+                    page_content=f"Graph extracted from page {page_num}:\n{text}",
+                    metadata={
+                        "source": pdf_path,
+                        "page": page_num,
+                        "content_type": "graph"
+                    }
+                )
+            )
+
+    print(f"Graphs extracted: {len(graph_documents)}")
+
+    return graph_documents
 
 
 # --------------------------------------------------
@@ -122,16 +190,19 @@ def load_documents(folder="docs"):
 
         path = os.path.join(folder, file)
 
-        # PDF
+        # ---------------- PDF ----------------
         if file.endswith(".pdf"):
 
             print(f"Processing PDF: {file}")
 
             docs = extract_pdf(path)
-
             documents.extend(docs)
 
-        # TXT
+            # Extract graph data
+            graphs = extract_graph_data(path)
+            documents.extend(graphs)
+
+        # ---------------- TXT ----------------
         elif file.endswith(".txt"):
 
             print(f"Processing TXT: {file}")
@@ -172,7 +243,7 @@ def split_documents(documents):
 
     for doc in documents:
 
-        if doc.metadata["content_type"] == "table":
+        if doc.metadata["content_type"] in ["table", "graph"]:
 
             chunks.append(doc)
 
@@ -205,14 +276,12 @@ def create_qdrant_db(chunks):
         timeout=60
     )
 
-    # delete collection if already exists
     try:
         client.delete_collection("rag_collection")
         print("Old collection deleted")
     except:
         pass
 
-    # create new collection
     client.create_collection(
         collection_name="rag_collection",
         vectors_config=VectorParams(
@@ -229,7 +298,7 @@ def create_qdrant_db(chunks):
 
     print("\nUploading documents in batches...\n")
 
-    batch_size = 32
+    batch_size = 8
 
     for i in range(0, len(chunks), batch_size):
 
